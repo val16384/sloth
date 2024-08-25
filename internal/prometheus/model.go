@@ -11,7 +11,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
-	promqlparser "github.com/prometheus/prometheus/promql/parser"
+
+	//promqlparser "github.com/prometheus/prometheus/promql/parser"
+	metricsql "github.com/VictoriaMetrics/metricsql"
 )
 
 // SLI reprensents an SLI with custom error and total expressions.
@@ -159,7 +161,8 @@ func validatePromExpression(fl validator.FieldLevel) bool {
 		return false
 	}
 
-	_, err = promqlparser.ParseExpr(tplB.String())
+	//_, err = promqlparser.ParseExpr(tplB.String())
+	_, err = metricsql.Parse(tplB.String())
 	return err == nil
 }
 
