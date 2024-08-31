@@ -30,6 +30,8 @@ publish:
   variables:
     IMAGE_TAG: ${CI_PIPELINE_IID}
     CI_PROJECT_PATH_SLUG: ${CI_PROJECT_NAME}
+    ARCH: amd64
+    VERSION: ${CI_PIPELINE_IID}
   except:
     - tags
   only:
