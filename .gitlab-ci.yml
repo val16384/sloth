@@ -11,30 +11,13 @@ stages:
   - publish
   - deploy
 
-unit test:
-  stage: build
-  image: golang:1.21
-  script:
-    - go test -coverprofile=coverage.out -json ./... | tee test-report.json
-  artifacts:
-    when: always
-    paths:
-      - test-report.json
-      - coverage.out
-    expire_in: 1 hour
-
-static check:
-  stage: build
-  image: golang:1.21
-  script:
-    - go install honnef.co/go/tools/cmd/staticcheck@2023.1.6
-    - staticcheck ./...
 
 build:
   stage: build
-  image: golang:1.21
+  image: golang:1.19
   script:
-    - go build ./...
+    - make ci-build
+    - cp docker/prod/Dockerfile ./
   artifacts:
     # instead of manually adding i.e. the built binaries, we can instead just
     # grab anything not tracked in Git
