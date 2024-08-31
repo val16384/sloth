@@ -1,0 +1,77 @@
+include:
+  - project: 'IaC/ci-templates'
+    ref: main
+    file: '/ci-templates/templates.yaml'
+  - project: 'IaC/ci-templates'
+    ref: main
+    file: '/ci-templates/sre-templates.yaml'
+
+stages:
+  - build
+  - publish
+  - deploy
+
+unit test:
+  stage: build
+  image: golang:1.21
+  script:
+    - go test -coverprofile=coverage.out -json ./... | tee test-report.json
+  artifacts:
+    when: always
+    paths:
+      - test-report.json
+      - coverage.out
+    expire_in: 1 hour
+
+static check:
+  stage: build
+  image: golang:1.21
+  script:
+    - go install honnef.co/go/tools/cmd/staticcheck@2023.1.6
+    - staticcheck ./...
+
+build:
+  stage: build
+  image: golang:1.21
+  script:
+    - go build ./...
+  artifacts:
+    # instead of manually adding i.e. the built binaries, we can instead just
+    # grab anything not tracked in Git
+    untracked: true
+    expire_in: 1 hour
+
+publish:
+  stage: publish
+  extends: .build_docker_image_kaniko
+  variables:
+    IMAGE_TAG: ${CI_PIPELINE_IID}
+    CI_PROJECT_PATH_SLUG: ${CI_PROJECT_NAME}
+  except:
+    - tags
+  only:
+    - branches
+
+# deploy test-tooling:
+#   extends: .deploy-sre-test-tooling
+#   when: manual
+#   except:
+#     - tags
+#   dependencies:
+#     - publish
+#   variables:
+#     VALUES: '
+#       spec.source.helm.valuesObject.sreSlith.tag: "${CI_PIPELINE_IID}"
+#       '
+
+# deploy tooling:
+#   extends: .deploy-sre-tooling
+#   when: manual
+#   except:
+#     - tags
+#   dependencies:
+#     - publish
+#   variables:
+#     VALUES: '
+#       spec.source.helm.valuesObject.sreSlith.tag: "${CI_PIPELINE_IID}"
+#       '
