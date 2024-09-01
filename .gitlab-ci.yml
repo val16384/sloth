@@ -52,11 +52,15 @@ build:
     untracked: true
     expire_in: 1 hour
 
+variables:
+  DOCKER_IMAGE_TAG: "metricsql"-${CI_PIPELINE_IID}
+
+
 publish:
   stage: publish
   extends: .build_docker_image_kaniko
   variables:
-    IMAGE_TAG: ${CI_PIPELINE_IID}
+    IMAGE_TAG: ${DOCKER_IMAGE_TAG}
     CI_PROJECT_PATH_SLUG: ${CI_PROJECT_NAME}
     ARCH: amd64
     VERSION: ${CI_PIPELINE_IID}
@@ -65,26 +69,15 @@ publish:
   only:
     - branches
 
-# deploy test-tooling:
-#   extends: .deploy-sre-test-tooling
-#   when: manual
-#   except:
-#     - tags
-#   dependencies:
-#     - publish
-#   variables:
-#     VALUES: '
-#       spec.source.helm.valuesObject.sreSlith.tag: "${CI_PIPELINE_IID}"
-#       '
 
-# deploy tooling:
-#   extends: .deploy-sre-tooling
-#   when: manual
-#   except:
-#     - tags
-#   dependencies:
-#     - publish
-#   variables:
-#     VALUES: '
-#       spec.source.helm.valuesObject.sreSlith.tag: "${CI_PIPELINE_IID}"
-#       '
+deploy tooling:
+  extends: .deploy-sre-tooling
+  when: manual
+  except:
+    - tags
+  dependencies:
+    - publish
+  variables:
+    VALUES: '
+      spec.source.helm.valuesObject.sloth.image.tag: "${DOCKER_IMAGE_TAG}"
+      '
